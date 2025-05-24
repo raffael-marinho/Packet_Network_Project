@@ -23,6 +23,7 @@ class NetworkSimulatorUI:
         style = {"bg": "#4CAF50", "fg": "white", "font": ("Segoe UI", 10, "bold"), "padx": 10, "pady": 5}
 
         tk.Button(frame, text="Adicionar Dispositivo", command=self.add_device, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="Remover Dispositivo", command=self.remove_device, **style).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Salvar Rede", command=self.save_network, **style).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Carregar Rede", command=self.load_network, **style).pack(side=tk.LEFT, padx=5)
 
@@ -36,6 +37,16 @@ class NetworkSimulatorUI:
             y = 100
             device = self.manager.add_device(name, ip, dev_type, x, y)
             self.draw_device(device)
+            
+    def remove_device(self):
+        name = simpledialog.askstring("Remover", "Nome do dispositivo a remover:")
+        if name:
+            existing = [d for d in self.manager.devices if d.name == name]
+            if not existing:
+                messagebox.showwarning("Aviso", f"Dispositivo '{name}' não encontrado.")
+                return
+            self.manager.remove_device(name)
+            self.redraw()
 
     def draw_device(self, device):
         rect = self.canvas.create_rectangle(

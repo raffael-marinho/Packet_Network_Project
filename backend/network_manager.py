@@ -15,6 +15,10 @@ class NetworkManager:
     def create_connection(self, name1, name2):
         self.connections.append((name1, name2))
 
+    def remove_device(self, name):
+        self.devices = [d for d in self.devices if d.name != name]
+        self.connections = [(a, b) for a, b in self.connections if name not in (a, b)]
+        
     def save_to_file(self, filename):
         data = {
             "devices": [device.__dict__ for device in self.devices],
