@@ -1,7 +1,7 @@
 import tkinter as tk
-from simulator import NetworkSimulator
+from frontend.simulator import NetworkSimulatorUI
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = NetworkSimulator(root)
+    app = NetworkSimulatorUI(root)
     root.mainloop()
