@@ -6,7 +6,7 @@ class NetworkSimulatorUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Simulador de Rede")
-        self.canvas = tk.Canvas(root, width=800, height=600, bg="white")
+        self.canvas = tk.Canvas(root, width=800, height=600, bg="#f9f9f9")
         self.canvas.pack()
 
         self.manager = NetworkManager()
@@ -17,17 +17,19 @@ class NetworkSimulatorUI:
         self.add_buttons()
 
     def add_buttons(self):
-        frame = tk.Frame(self.root)
-        frame.pack(side=tk.BOTTOM)
+        frame = tk.Frame(self.root, bg="#ffffff")
+        frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
 
-        tk.Button(frame, text="Adicionar Dispositivo", command=self.add_device).pack(side=tk.LEFT)
-        tk.Button(frame, text="Salvar Rede", command=self.save_network).pack(side=tk.LEFT)
-        tk.Button(frame, text="Carregar Rede", command=self.load_network).pack(side=tk.LEFT)
+        style = {"bg": "#4CAF50", "fg": "white", "font": ("Segoe UI", 10, "bold"), "padx": 10, "pady": 5}
+
+        tk.Button(frame, text="Adicionar Dispositivo", command=self.add_device, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="Salvar Rede", command=self.save_network, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="Carregar Rede", command=self.load_network, **style).pack(side=tk.LEFT, padx=5)
 
     def add_device(self):
         name = simpledialog.askstring("Nome", "Nome do dispositivo:")
         ip = simpledialog.askstring("IP", "Endereço IP:")
-        dev_type = simpledialog.askstring("Tipo", "Tipo (PC, Roteador...)")
+        dev_type = simpledialog.askstring("Tipo", "Tipo (PC, Roteador...):")
 
         if name and ip and dev_type:
             x = self.offset + len(self.manager.devices) * (self.device_size + 20)
@@ -36,13 +38,13 @@ class NetworkSimulatorUI:
             self.draw_device(device)
 
     def draw_device(self, device):
-        self.canvas.create_rectangle(
+        rect = self.canvas.create_rectangle(
             device.x, device.y, device.x + self.device_size, device.y + self.device_size,
-            fill="lightblue", tags=device.name
+            fill="#b3e5fc", outline="#0288d1", width=2, tags=device.name
         )
-        self.canvas.create_text(
+        text = self.canvas.create_text(
             device.x + self.device_size / 2, device.y + self.device_size / 2,
-            text=device.name, tags=device.name
+            text=device.name, font=("Segoe UI", 10, "bold"), tags=device.name
         )
         self.canvas.tag_bind(device.name, "<Button-1>", lambda e: self.handle_click(device))
 
@@ -54,7 +56,7 @@ class NetworkSimulatorUI:
             self.canvas.create_line(
                 self.selected_device.x + self.device_size / 2, self.selected_device.y + self.device_size / 2,
                 device.x + self.device_size / 2, device.y + self.device_size / 2,
-                fill="black", width=2
+                fill="#424242", width=2
             )
             self.selected_device = None
 
@@ -84,5 +86,5 @@ class NetworkSimulatorUI:
             self.canvas.create_line(
                 d1.x + self.device_size / 2, d1.y + self.device_size / 2,
                 d2.x + self.device_size / 2, d2.y + self.device_size / 2,
-                fill="black", width=2
+                fill="#424242", width=2
             )
