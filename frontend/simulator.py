@@ -26,6 +26,7 @@ class NetworkSimulatorUI:
         tk.Button(frame, text="Remover Dispositivo", command=self.remove_device, **style).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Salvar Rede", command=self.save_network, **style).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Carregar Rede", command=self.load_network, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="Excluir Rede", command=self.delete_network, **style).pack(side=tk.LEFT, padx=5)
 
     def add_device(self):
         name = simpledialog.askstring("Nome", "Nome do dispositivo:")
@@ -37,7 +38,7 @@ class NetworkSimulatorUI:
             y = 100
             device = self.manager.add_device(name, ip, dev_type, x, y)
             self.draw_device(device)
-            
+
     def remove_device(self):
         name = simpledialog.askstring("Remover", "Nome do dispositivo a remover:")
         if name:
@@ -99,3 +100,13 @@ class NetworkSimulatorUI:
                 d2.x + self.device_size / 2, d2.y + self.device_size / 2,
                 fill="#424242", width=2
             )
+    
+    def delete_network(self):
+        filename = simpledialog.askstring("Excluir", "Nome do arquivo (sem .json):")
+        if filename:
+            full_path = f"{filename}.json"
+            if self.manager.delete_network_file(full_path):
+                messagebox.showinfo("Sucesso", f"Arquivo '{full_path}' excluído com sucesso!")
+            else:
+                messagebox.showerror("Erro", f"O arquivo '{full_path}' não foi encontrado.")
+

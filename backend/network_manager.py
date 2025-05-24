@@ -35,3 +35,9 @@ class NetworkManager:
             data = json.load(f)
             self.devices = [Device(**dev) for dev in data["devices"]]
             self.connections = data["connections"]
+    
+    def delete_network_file(self, filename):
+        if os.path.exists(filename):
+            os.remove(filename)
+            return True
+        return False
