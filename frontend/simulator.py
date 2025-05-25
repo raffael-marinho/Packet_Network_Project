@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+from PIL import Image, ImageTk
 from backend.network_manager import NetworkManager
 
 class NetworkSimulatorUI:
@@ -13,6 +14,12 @@ class NetworkSimulatorUI:
         self.selected_device = None
         self.device_size = 60
         self.offset = 20
+
+        # Carrega imagens dos dispositivos
+        self.images = {
+            "pc": ImageTk.PhotoImage(Image.open("assets/pc.png").resize((60, 60))),
+            "roteador": ImageTk.PhotoImage(Image.open("assets/roteador.png").resize((60, 60))),
+        }
 
         self.add_buttons()
 
@@ -50,14 +57,24 @@ class NetworkSimulatorUI:
             self.redraw()
 
     def draw_device(self, device):
-        rect = self.canvas.create_rectangle(
-            device.x, device.y, device.x + self.device_size, device.y + self.device_size,
-            fill="#b3e5fc", outline="#0288d1", width=2, tags=device.name
-        )
-        text = self.canvas.create_text(
+        device_type = device.device_type.lower()
+        image = self.images.get(device_type)
+
+        if image:
+            self.canvas.create_image(
+                device.x, device.y, anchor=tk.NW, image=image, tags=device.name
+            )
+        else:
+            self.canvas.create_rectangle(
+                device.x, device.y, device.x + self.device_size, device.y + self.device_size,
+                fill="#b3e5fc", outline="#0288d1", width=2, tags=device.name
+            )
+
+        self.canvas.create_text(
             device.x + self.device_size / 2, device.y + self.device_size / 2,
             text=device.name, font=("Segoe UI", 10, "bold"), tags=device.name
         )
+
         self.canvas.tag_bind(device.name, "<Button-1>", lambda e: self.handle_click(device))
 
     def handle_click(self, device):
@@ -100,7 +117,7 @@ class NetworkSimulatorUI:
                 d2.x + self.device_size / 2, d2.y + self.device_size / 2,
                 fill="#424242", width=2
             )
-    
+
     def delete_network(self):
         filename = simpledialog.askstring("Excluir", "Nome do arquivo (sem .json):")
         if filename:
@@ -109,4 +126,3 @@ class NetworkSimulatorUI:
                 messagebox.showinfo("Sucesso", f"Arquivo '{full_path}' excluído com sucesso!")
             else:
                 messagebox.showerror("Erro", f"O arquivo '{full_path}' não foi encontrado.")
-
