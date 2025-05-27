@@ -20,6 +20,7 @@ class NetworkSimulatorUI:
         self.images = {
             "pc": ImageTk.PhotoImage(Image.open("assets/pc.png").resize((60, 60))),
             "roteador": ImageTk.PhotoImage(Image.open("assets/roteador.png").resize((60, 60))),
+            "envelope": ImageTk.PhotoImage(Image.open("assets/envelope.png").resize((30, 30))),
         }
 
         self.drag_data = {"x": 0, "y": 0, "device": None}
@@ -106,9 +107,13 @@ class NetworkSimulatorUI:
         if not self.selected_device:
             self.selected_device = device
         else:
-            self.manager.create_connection(self.selected_device.name, device.name)
+            if (self.selected_device.name, device.name) in self.manager.connections or \
+                (device.name, self.selected_device.name) in self.manager.connections:
+                self.animate_transfer(self.selected_device, device)
+            else:
+                self.manager.create_connection(self.selected_device.name, device.name)
+                self.redraw()
             self.selected_device = None
-            self.redraw()
 
     def move_device(self, event, device):
         dx = event.x - device.x - self.device_size // 2
@@ -141,6 +146,28 @@ class NetworkSimulatorUI:
                 fill="#424242", width=2
             )
             self.connection_lines.append(line)
+    def animate_transfer(self, from_device, to_device):
+        x1 = from_device.x + self.device_size / 2
+        y1 = from_device.y + self.device_size / 2
+        x2 = to_device.x + self.device_size / 2
+        y2 = to_device.y + self.device_size / 2
+
+        steps = 50
+        delay = 15  # milissegundos
+        dx = (x2 - x1) / steps
+        dy = (y2 - y1) / steps
+
+        envelope = self.canvas.create_image(x1, y1, image=self.images["envelope"])
+
+        def move(step=0):
+            if step > steps:
+                self.canvas.delete(envelope)
+                return
+            self.canvas.move(envelope, dx, dy)
+            self.root.after(delay, lambda: move(step + 1))
+
+        move()
+
 
     def redraw(self):
         self.canvas.delete("all")
