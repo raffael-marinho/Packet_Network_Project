@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog, messagebox
+from tkinter import simpledialog, messagebox, ttk
 from PIL import Image, ImageTk
 from backend.network_manager import NetworkManager
 
@@ -30,23 +30,56 @@ class NetworkSimulatorUI:
         frame = tk.Frame(self.root, bg="#ffffff")
         frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
 
-        style = {"bg": "#4CAF50", "fg": "white", "font": ("Segoe UI", 10, "bold"), "padx": 10, "pady": 5}
+        style = {"bg": "#3498db", "fg": "white", "font": ("Segoe UI", 10, "bold"), "padx": 10, "pady": 5}
 
-        tk.Button(frame, text="Adicionar Dispositivo", command=self.add_device, **style).pack(side=tk.LEFT, padx=5)
-        tk.Button(frame, text="Remover Dispositivo", command=self.remove_device, **style).pack(side=tk.LEFT, padx=5)
-        tk.Button(frame, text="Salvar Rede", command=self.save_network, **style).pack(side=tk.LEFT, padx=5)
-        tk.Button(frame, text="Carregar Rede", command=self.load_network, **style).pack(side=tk.LEFT, padx=5)
-        tk.Button(frame, text="Excluir Rede", command=self.delete_network, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="➕ Adicionar", command=self.add_device, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="❌ Remover", command=self.remove_device, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="💾 Salvar Rede", command=self.save_network, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="📂 Carregar Rede", command=self.load_network, **style).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="🗑️ Excluir Rede", command=self.delete_network, **style).pack(side=tk.LEFT, padx=5)
+
+    def ask_device_info(self):
+        popup = tk.Toplevel(self.root)
+        popup.title("Adicionar Dispositivo")
+        popup.geometry("350x270")
+        popup.configure(bg="#f0f2f5")
+        popup.resizable(False, False)
+        popup.grab_set()
+
+        name_var = tk.StringVar()
+        ip_var = tk.StringVar()
+        type_var = tk.StringVar()
+        result = {}
+
+        def confirm():
+            if name_var.get() and ip_var.get() and type_var.get():
+                result["name"] = name_var.get()
+                result["ip"] = ip_var.get()
+                result["type"] = type_var.get()
+                popup.destroy()
+            else:
+                messagebox.showwarning("Atenção", "Preencha todos os campos.")
+
+        ttk.Label(popup, text="Nome do dispositivo:", background="#f0f2f5").pack(pady=(20, 5), padx=20, anchor="w")
+        ttk.Entry(popup, textvariable=name_var).pack(pady=(0, 15), padx=20, fill='x')
+
+        ttk.Label(popup, text="Endereço IP:", background="#f0f2f5").pack(pady=(0, 5), padx=20, anchor="w")
+        ttk.Entry(popup, textvariable=ip_var).pack(pady=(0, 15), padx=20, fill='x')
+
+        ttk.Label(popup, text="Tipo (PC, Roteador...):", background="#f0f2f5").pack(pady=(0, 5), padx=20, anchor="w")
+        ttk.Entry(popup, textvariable=type_var).pack(pady=(0, 20), padx=20, fill='x')
+
+        ttk.Button(popup, text="Adicionar", command=confirm).pack(pady=(0, 10))
+
+        popup.wait_window()
+        return result if result else None
 
     def add_device(self):
-        name = simpledialog.askstring("Nome", "Nome do dispositivo:")
-        ip = simpledialog.askstring("IP", "Endereço IP:")
-        dev_type = simpledialog.askstring("Tipo", "Tipo (PC, Roteador...):")
-
-        if name and ip and dev_type:
+        data = self.ask_device_info()
+        if data:
             x = self.offset + len(self.manager.devices) * (self.device_size + 20)
             y = 100
-            device = self.manager.add_device(name, ip, dev_type, x, y)
+            device = self.manager.add_device(data["name"], data["ip"], data["type"], x, y)
             self.draw_device(device)
 
     def remove_device(self):
@@ -61,7 +94,7 @@ class NetworkSimulatorUI:
         image = self.images.get(device_type)
         img_id = self.canvas.create_image(device.x, device.y, anchor=tk.NW, image=image, tags=tag)
         text_id = self.canvas.create_text(device.x + self.device_size / 2, device.y + self.device_size + 10,
-                                          text=device.name, font=("Segoe UI", 10, "bold"), tags=tag)
+        text=device.name, font=("Segoe UI", 10, "bold"), tags=tag)
 
         self.device_widgets[device.name] = (img_id, text_id)
 
