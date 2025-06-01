@@ -1,9 +1,11 @@
+import os
 import tkinter as tk
 from tkinter import simpledialog, messagebox, ttk
 from PIL import Image, ImageTk
 import ipaddress
 import threading
 import time
+from backend.network_manager import NetworkManager
 
 # --- MODELOS DE DADOS ---
 
@@ -163,7 +165,7 @@ class NetworkSimulatorUI:
         tk.Button(sidebar, text="🚀 Enviar Pacotes", command=self.ask_send_packets, **button_style).pack(pady=5)
         tk.Button(sidebar, text="💾 Salvar", command=self.save_network, **button_style).pack(pady=5)
         tk.Button(sidebar, text="📂 Carregar", command=self.load_network, **button_style).pack(pady=5)
-        tk.Button(sidebar, text="🗑️ Excluir", command=self.delete_network, **button_style).pack(pady=5)
+        tk.Button(sidebar, text="🗑️ Excluir arquivo", command=self.delete_network, **button_style).pack(pady=5)
 
     def ask_device_info(self):
         popup = tk.Toplevel(self.root)
@@ -324,16 +326,44 @@ class NetworkSimulatorUI:
         self.canvas.delete(packet_id)
 
     def save_network(self):
-        messagebox.showinfo("Salvar", "Funcionalidade de salvar ainda não implementada.")
+        filename = simpledialog.askstring("Salvar", "Nome do arquivo (sem .json):")
+        if filename:
+            try:
+                # Garante que estamos salvando no diretório atual
+                filepath = f"{filename}.json"
+                self.manager.save_to_file(filepath)
+                messagebox.showinfo("Sucesso", f"Rede salva como {filepath}")
+            except Exception as e:
+                messagebox.showerror("Erro", f"Falha ao salvar: {str(e)}")
 
     def load_network(self):
-        messagebox.showinfo("Carregar", "Funcionalidade de carregar ainda não implementada.")
+        filename = simpledialog.askstring("Carregar", "Nome do arquivo (sem .json):")
+        if filename:
+            try:
+                filepath = f"{filename}.json"
+                self.manager.load_from_file(filepath)
+                self.redraw()
+                messagebox.showinfo("Sucesso", "Rede carregada com sucesso!")
+            except FileNotFoundError:
+                messagebox.showerror("Erro", "Arquivo não encontrado.")
+            except Exception as e:
+                messagebox.showerror("Erro", f"Falha ao carregar: {str(e)}")
 
-    def delete_network(self):
-        if messagebox.askyesno("Confirmar", "Deseja apagar toda a rede?"):
-            self.manager = NetworkManager()
-            self.redraw()
-
+    def delete_network(self):      
+        filename = simpledialog.askstring("Excluir", "Nome do arquivo (sem .json):")
+        if filename:
+            try:
+                # Define o local padrão como saved_networks
+                os.makedirs("saved_networks", exist_ok=True)  # Garante que a pasta existe
+                filepath = os.path.join("saved_networks", f"{filename}.json")
+                
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    messagebox.showinfo("Sucesso", f"Arquivo '{filename}.json' excluído com sucesso!")
+                else:
+                    messagebox.showerror("Erro", f"Arquivo '{filename}.json' não encontrado em saved_networks")
+            except Exception as e:
+                messagebox.showerror("Erro", f"Falha ao excluir: {str(e)}")
     def redraw(self):
         self.canvas.delete("all")
         for device in self.manager.devices:

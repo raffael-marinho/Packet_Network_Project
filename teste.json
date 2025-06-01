@@ -1,1 +1,0 @@
-{"devices": [{"name": "raffa", "ip": "192.168.0.1", "device_type": "pc", "x": 20, "y": 100}, {"name": "router", "ip": "192.168.0.2", "device_type": "roteador", "x": 100, "y": 100}], "connections": []}
