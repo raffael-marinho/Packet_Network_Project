@@ -5,7 +5,7 @@ from .device import Device
 class NetworkManager:
     def __init__(self):
         self.devices = []
-        self.connections = []
+        self.connection_lines = {}
 
     def add_device(self, name, ip, device_type, x, y):
         device = Device(name, ip, device_type, x, y)

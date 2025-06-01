@@ -134,20 +134,18 @@ class NetworkSimulatorUI:
         self.device_size = 60
         self.offset = 20
         self.device_widgets = {}
-        self.connection_lines = []
+        self.connection_lines = {}  # Dicionário para rastrear as linhas de conexão (ordenado tuple de nomes -> id da linha)
         self.animating_packets = False
-
-        self.canvas = tk.Canvas(root, width=900, height=650, bg="#f9f9f9", scrollregion=(0, 0, 1600, 1200))
-        self.canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
+        self.drag_data = {"x": 0, "y": 0, "device": None}
         self.images = {
             "pc": ImageTk.PhotoImage(Image.open("assets/pc.png").resize((60, 60))),
             "roteador": ImageTk.PhotoImage(Image.open("assets/roteador.png").resize((60, 60))),
             "envelope": ImageTk.PhotoImage(Image.open("assets/envelope.png").resize((30, 30))),
         }
 
-        self.drag_data = {"x": 0, "y": 0, "device": None}
-
+        # Inicialização do canvas e sidebar movidos para o __init__
+        self.canvas = tk.Canvas(self.root, width=900, height=650, bg="#f9f9f9", scrollregion=(0, 0, 1600, 1200))
+        self.canvas.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.add_sidebar()
 
     def add_sidebar(self):
@@ -351,11 +349,14 @@ class NetworkSimulatorUI:
         self.canvas.tag_bind(widget, "<B1-Motion>", lambda e, dev=device: self.on_device_drag(e, dev))
         self.canvas.tag_bind(widget, "<ButtonRelease-1>", lambda e: self.on_device_release(e))
 
-        # Nome do dispositivo
-        self.canvas.create_text(device.x + self.device_size // 2, device.y + self.device_size + 10,
-                                text=f"{device.name}\n{device.ip}", font=("Segoe UI", 8), fill="black")
-
+        # Nome do dispositivo (adicionando a tag)
+        text_id = self.canvas.create_text(device.x + self.device_size // 2, device.y + self.device_size + 10,
+                                            text=f"{device.name}\n{device.ip}", font=("Segoe UI", 8), fill="black",
+                                            tags=f"text_{device.name}")
     def draw_connection(self, name1, name2):
+        # Ordenar os nomes para usar como chave no dicionário
+        sorted_names = tuple(sorted((name1, name2)))
+
         d1 = self.manager.get_device(name1)
         d2 = self.manager.get_device(name2)
         if d1 and d2:
@@ -363,7 +364,15 @@ class NetworkSimulatorUI:
             y1 = d1.y + self.device_size // 2
             x2 = d2.x + self.device_size // 2
             y2 = d2.y + self.device_size // 2
-            self.canvas.create_line(x1, y1, x2, y2, fill="#2980b9", width=2)
+
+            if sorted_names in self.connection_lines:
+                # A linha já existe, apenas atualize as coordenadas
+                line_id = self.connection_lines[sorted_names]
+                self.canvas.coords(line_id, x1, y1, x2, y2)
+            else:
+                # A linha não existe, crie uma nova
+                line = self.canvas.create_line(x1, y1, x2, y2, fill="#2980b9", width=2)
+                self.connection_lines[sorted_names] = line
 
     def on_device_click(self, event, device):
         self.drag_data["device"] = device
@@ -377,7 +386,21 @@ class NetworkSimulatorUI:
         device.y += dy
         self.drag_data["x"] = event.x
         self.drag_data["y"] = event.y
-        self.redraw()
+        self.update_device_position_on_canvas(device)
+        self.redraw_connections()
+
+    def update_device_position_on_canvas(self, device):
+        widget_id = self.device_widgets.get(device.name)
+        if widget_id:
+            self.canvas.coords(widget_id, device.x, device.y)
+            # Atualizar a posição do texto do nome do dispositivo
+            text_items = self.canvas.find_withtag(f"text_{device.name}")
+            if text_items:
+                self.canvas.coords(text_items[0], device.x + self.device_size // 2, device.y + self.device_size + 10)
+
+    def redraw_connections(self):
+        for name1, name2 in self.manager.connections:
+            self.draw_connection(name1, name2)
 
     def on_device_release(self, event):
         self.drag_data = {"x": 0, "y": 0, "device": None}
