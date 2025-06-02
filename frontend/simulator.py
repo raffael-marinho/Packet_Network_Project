@@ -1,3 +1,4 @@
+import json
 import os
 import tkinter as tk
 from tkinter import simpledialog, messagebox, ttk
@@ -326,47 +327,64 @@ class NetworkSimulatorUI:
         self.canvas.delete(packet_id)
 
     def save_network(self):
-        filename = simpledialog.askstring("Salvar", "Nome do arquivo (sem .json):")
+        filename = simpledialog.askstring("Salvar", "Nome do arquivo:")
         if filename:
             try:
-                os.makedirs("saved_networks", exist_ok=True)  
+                # Garante que o diretório existe
+                os.makedirs("saved_networks", exist_ok=True)
                 filepath = os.path.join("saved_networks", f"{filename}.json")
                 
-                if os.path.exists(filepath):
-                    resposta = messagebox.askyesno(
-                        "Confirmação", 
-                        f"O arquivo '{filename}.json' já existe. Deseja sobrescrever?"
-                    )
-                    if not resposta:
-                        return
-                
-                dados_rede = {
-                    "dispositivos": [d.__dict__ for d in self.manager.devices],
-                    "conexoes": self.manager.connections
+                # Prepara os dados para serialização
+                network_data = {
+                    "devices": [
+                        {
+                            "name": device.name,
+                            "ip": str(device.ip),  # Converte IPv4Address para string
+                            "type": device.device_type,
+                            "x": device.x,
+                            "y": device.y
+                        } for device in self.manager.devices
+                    ],
+                    "connections": self.manager.connections
                 }
                 
-                with open(filepath, 'w') as arquivo:
-                    import json
-                    json.dump(dados_rede, arquivo, indent=4)
+                # Salva o arquivo
+                with open(filepath, 'w') as f:
+                    json.dump(network_data, f, indent=2)
                 
-                messagebox.showinfo("Sucesso", f"Arquivo '{filename}.json' salvo com sucesso em saved_networks!")
+                messagebox.showinfo("Sucesso", f"Rede salva em {filepath}")
                 
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao salvar: {str(e)}")
 
     def load_network(self):
-        filename = simpledialog.askstring("Carregar", "Nome do arquivo (sem .json):")
+        filename = simpledialog.askstring("Carregar", "Nome do arquivo:")
         if filename:
             try:
-                os.makedirs("saved_networks", exist_ok=True) 
                 filepath = os.path.join("saved_networks", f"{filename}.json")
                 
-                if os.path.exists(filepath):
-                    self.manager.load_from_file(filepath)
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                    
+                    # Limpa a rede atual
+                    self.manager.devices.clear()
+                    self.manager.connections.clear()
+                    
+                    # Recria os dispositivos
+                    for device_data in data['devices']:
+                        self.manager.add_device(
+                            name=device_data['name'],
+                            ip=device_data['ip'],  # Já está como string
+                            device_type=device_data['type'],
+                            x=device_data['x'],
+                            y=device_data['y']
+                        )
+                    
+                    # Recria as conexões
+                    self.manager.connections = data['connections']
+                    
                     self.redraw()
-                    messagebox.showinfo("Sucesso", f"Arquivo '{filename}.json' carregado de saved_networks com sucesso!")
-                else:
-                    messagebox.showerror("Erro", f"Arquivo '{filename}.json' não encontrado em saved_networks")
+                    messagebox.showinfo("Sucesso", "Rede carregada!")
                     
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao carregar: {str(e)}")
@@ -375,8 +393,7 @@ class NetworkSimulatorUI:
         filename = simpledialog.askstring("Excluir", "Nome do arquivo (sem .json):")
         if filename:
             try:
-                # Define o local padrão como saved_networks
-                os.makedirs("saved_networks", exist_ok=True)  # Garante que a pasta existe
+                os.makedirs("saved_networks", exist_ok=True)
                 filepath = os.path.join("saved_networks", f"{filename}.json")
                 
                 if os.path.exists(filepath):

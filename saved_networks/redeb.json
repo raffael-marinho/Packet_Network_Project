@@ -1,0 +1,24 @@
+{
+  "devices": [
+    {
+      "name": "a",
+      "ip": "192.168.0.1",
+      "type": "pc",
+      "x": 20,
+      "y": 100
+    },
+    {
+      "name": "router",
+      "ip": "192.168.0.2",
+      "type": "roteador",
+      "x": 432,
+      "y": 100
+    }
+  ],
+  "connections": [
+    [
+      "a",
+      "router"
+    ]
+  ]
+}
