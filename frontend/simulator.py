@@ -329,10 +329,28 @@ class NetworkSimulatorUI:
         filename = simpledialog.askstring("Salvar", "Nome do arquivo (sem .json):")
         if filename:
             try:
-                # Garante que estamos salvando no diretório atual
-                filepath = f"{filename}.json"
-                self.manager.save_to_file(filepath)
-                messagebox.showinfo("Sucesso", f"Rede salva como {filepath}")
+                os.makedirs("saved_networks", exist_ok=True)  
+                filepath = os.path.join("saved_networks", f"{filename}.json")
+                
+                if os.path.exists(filepath):
+                    resposta = messagebox.askyesno(
+                        "Confirmação", 
+                        f"O arquivo '{filename}.json' já existe. Deseja sobrescrever?"
+                    )
+                    if not resposta:
+                        return
+                
+                dados_rede = {
+                    "dispositivos": [d.__dict__ for d in self.manager.devices],
+                    "conexoes": self.manager.connections
+                }
+                
+                with open(filepath, 'w') as arquivo:
+                    import json
+                    json.dump(dados_rede, arquivo, indent=4)
+                
+                messagebox.showinfo("Sucesso", f"Arquivo '{filename}.json' salvo com sucesso em saved_networks!")
+                
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao salvar: {str(e)}")
 
@@ -340,12 +358,16 @@ class NetworkSimulatorUI:
         filename = simpledialog.askstring("Carregar", "Nome do arquivo (sem .json):")
         if filename:
             try:
-                filepath = f"{filename}.json"
-                self.manager.load_from_file(filepath)
-                self.redraw()
-                messagebox.showinfo("Sucesso", "Rede carregada com sucesso!")
-            except FileNotFoundError:
-                messagebox.showerror("Erro", "Arquivo não encontrado.")
+                os.makedirs("saved_networks", exist_ok=True) 
+                filepath = os.path.join("saved_networks", f"{filename}.json")
+                
+                if os.path.exists(filepath):
+                    self.manager.load_from_file(filepath)
+                    self.redraw()
+                    messagebox.showinfo("Sucesso", f"Arquivo '{filename}.json' carregado de saved_networks com sucesso!")
+                else:
+                    messagebox.showerror("Erro", f"Arquivo '{filename}.json' não encontrado em saved_networks")
+                    
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao carregar: {str(e)}")
 
@@ -364,6 +386,7 @@ class NetworkSimulatorUI:
                     messagebox.showerror("Erro", f"Arquivo '{filename}.json' não encontrado em saved_networks")
             except Exception as e:
                 messagebox.showerror("Erro", f"Falha ao excluir: {str(e)}")
+
     def redraw(self):
         self.canvas.delete("all")
         for device in self.manager.devices:
